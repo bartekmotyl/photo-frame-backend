@@ -37,9 +37,11 @@ export function createPhotoManager(photoGroup: PhotoGroupConfig) {
   const paths = photoGroup.files
   const cache = new Map<string, CacheEntry<PhotoData>>()
   const randomOrder = shuffle(range(0, paths.length))
+
   let currentIndex = 0
 
-  async function ensurePhotoLoaded(path: string): Promise<PhotoData> {
+  async function ensurePhotoLoaded(index: number): Promise<PhotoData> {
+    const path: string = paths[randomOrder[index]]
     if (cache.has(path)) {
       winston.debug(`Photo found in cache (${path})`)
       const entry = cache.get(path)!
@@ -104,18 +106,12 @@ export function createPhotoManager(photoGroup: PhotoGroupConfig) {
   }
 
   async function getRandomPhoto(): Promise<PhotoData> {
-    const photo = await ensurePhotoLoaded(paths[currentIndex])
+    const photo = await ensurePhotoLoaded(currentIndex)
 
     // Pre-load a few next photos
-    const nextCachePromise1 = ensurePhotoLoaded(
-      paths[normalizeIndex(currentIndex + 1)]
-    )
-    const nextCachePromise2 = ensurePhotoLoaded(
-      paths[normalizeIndex(currentIndex + 2)]
-    )
-    const nextCachePromise3 = ensurePhotoLoaded(
-      paths[normalizeIndex(currentIndex + 3)]
-    )
+    const nextCachePromise1 = ensurePhotoLoaded(currentIndex + 1)
+    const nextCachePromise2 = ensurePhotoLoaded(currentIndex + 2)
+    const nextCachePromise3 = ensurePhotoLoaded(currentIndex + 3)
 
     currentIndex = normalizeIndex(currentIndex + 1)
     return photo

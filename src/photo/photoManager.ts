@@ -26,8 +26,6 @@ function initializePhotoManagers() {
   dotenv.config()
   const buffer = fs.readFileSync(process.env.PHOTO_LISTS_CONFIG ?? "")
   const photoGroups = JSON.parse(buffer.toString()) as PhotoGroupConfig[]
-
-  console.log(JSON.stringify(photoGroups))
   return photoGroups.map((pg) => createPhotoManager(pg))
 }
 
@@ -54,8 +52,12 @@ export function createPhotoManager(photoGroup: PhotoGroupConfig) {
       data: loaded,
       lastAccess: Date.now(),
     })
+    winston.debug(`Photo loaded and added to cache (${path}). `)
+    const used = process.memoryUsage().heapUsed / 1024 / 1024
     winston.debug(
-      `Photo loaded and added to cache (${path}). ${cache.size} entries in cache.`
+      `${cache.size} entries in cache. Approximately ${
+        Math.round(used * 100) / 100
+      } MB`
     )
     return Promise.resolve(loaded)
   }
@@ -73,6 +75,7 @@ export function createPhotoManager(photoGroup: PhotoGroupConfig) {
     const md = await sharpBuffer.metadata()
     const isVertical = md.orientation ?? 0 >= 5
     const resized = await sharpBuffer
+      .rotate()
       .resize(isVertical ? { height: 1920 } : { width: 1920 })
       .toBuffer()
 
@@ -109,9 +112,9 @@ export function createPhotoManager(photoGroup: PhotoGroupConfig) {
     const photo = await ensurePhotoLoaded(currentIndex)
 
     // Pre-load a few next photos
-    const nextCachePromise1 = ensurePhotoLoaded(currentIndex + 1)
-    const nextCachePromise2 = ensurePhotoLoaded(currentIndex + 2)
-    const nextCachePromise3 = ensurePhotoLoaded(currentIndex + 3)
+    range(1, 4).forEach((i) =>
+      /* no await here! */ ensurePhotoLoaded(currentIndex + i)
+    )
 
     currentIndex = normalizeIndex(currentIndex + 1)
     return photo

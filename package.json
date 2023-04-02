@@ -4,9 +4,10 @@
   "description": "",
   "main": "./src",
   "scripts": {
-    "start": "tsc && node output/main.js",
     "watch": "ts-node-dev --files --respawn --inspect -r tsconfig-paths/register ./src",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "yarn rm:public && tsc && yarn copy:files",
+    "rm:public": "shx rm -rf ./public",
+    "copy:files": "shx mkdir -p public && shx cp .env ./public/.env"
   },
   "author": "",
   "license": "ISC",
@@ -19,6 +20,7 @@
     "eslint-plugin-n": "^15.0.0",
     "eslint-plugin-promise": "^6.0.0",
     "prettier": "2.8.7",
+    "tsconfig-paths": "^4.2.0",
     "typescript": "*"
   },
   "dependencies": {
@@ -34,6 +36,7 @@
     "lodash": "^4.17.21",
     "node-exif": "^1.0.1",
     "sharp": "^0.32.0",
+    "shx": "^0.3.4",
     "winston": "^3.8.2"
   }
 }

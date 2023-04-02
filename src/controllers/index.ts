@@ -1,0 +1,1 @@
+export { PhotosController } from "./photosController"

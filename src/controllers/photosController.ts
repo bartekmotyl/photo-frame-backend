@@ -6,7 +6,8 @@ import { photoManagers } from "../photo/photoManager"
 export const PhotosController = {
   getRandomPhotoJpeg: async (req: Request, res: Response) => {
     try {
-      const photoData = await photoManagers[0].getRandomPhoto()
+      const groupIdx = parseInt(req.params.groupIdx ?? "0")
+      const photoData = await photoManagers[groupIdx].getRandomPhoto()
 
       return res
         .status(StatusCodes.OK)
@@ -21,7 +22,8 @@ export const PhotosController = {
   },
   getRandomPhotoJson: async (req: Request, res: Response) => {
     try {
-      const photoData = await photoManagers[0].getRandomPhoto()
+      const groupIdx = parseInt(req.params.groupIdx ?? "0")
+      const photoData = await photoManagers[groupIdx].getRandomPhoto()
       photoData.data = photoData.data.toString("base64")
       return res.status(StatusCodes.OK).json(photoData)
     } catch (error) {

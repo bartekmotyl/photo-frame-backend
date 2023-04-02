@@ -95,6 +95,7 @@ export function createPhotoManager(photoGroup: PhotoGroupConfig) {
           }
         })
       } catch (error) {
+        winston.debug(`Error when loading EXIF data (${error})`)
         reject(error)
       }
     })

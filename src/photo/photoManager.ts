@@ -63,7 +63,9 @@ export function createPhotoManager(photoGroup: PhotoGroupConfig) {
     const imageFileName = basename(path)
     const fileStats = await file.stat()
     const bytes = await file.readFile()
-    const sharpBuffer = sharp(bytes)
+    const sharpBuffer = sharp(bytes, {
+      failOn: "none",
+    })
     const exifData = await getExifData(bytes)
 
     const md = await sharpBuffer.metadata()

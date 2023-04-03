@@ -57,6 +57,7 @@ export function createPhotoManager(photoGroup: PhotoGroupConfig) {
     try {
       loaded = await loadPhoto(path)
     } catch (error) {
+      winston.warn(`error when loading photo (${path}): ${error}`)
       return undefined
     }
     cache.set(path, {
@@ -74,7 +75,9 @@ export function createPhotoManager(photoGroup: PhotoGroupConfig) {
   }
 
   async function loadPhoto(path: string): Promise<PhotoData> {
+    winston.debug(`trying to load file from disk: ${path}`)
     if (!fs.existsSync(path)) {
+      winston.error(`file '${path}' does not exist`)
       throw new Error(`file '${path}' does not exist`)
     }
     const file = await asyncfs.open(path)

@@ -1,4 +1,9 @@
 export type PhotoGroupConfig = {
-  name: string
+  group: string
   files: string[]
+}
+
+export type PhotoGroupMeta = {
+  name: string
+  photosCount: number
 }

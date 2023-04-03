@@ -1,7 +1,7 @@
 import express, { Express } from "express"
 import { corsMiddleware, notFoundMiddleware } from "./middlewares"
 import { router } from "./routes"
-import { configure, format, transports } from "winston"
+import winston, { configure, format, transports } from "winston"
 import { config } from "dotenv"
 
 config()
@@ -21,6 +21,10 @@ configure({
     new transports.Console(),
   ],
   level: "debug",
+})
+process.on("uncaughtException", function (err) {
+  winston.error(err)
+  winston.debug("Node NOT Exiting...")
 })
 
 const app: Express = express()

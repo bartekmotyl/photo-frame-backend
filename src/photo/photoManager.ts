@@ -6,7 +6,7 @@ import { range, shuffle } from "lodash"
 import { ExifData, ExifImage } from "exif"
 import winston from "winston"
 import * as dotenv from "dotenv"
-import { PhotoGroupConfig } from "@/types"
+import { PhotoGroupConfig, PhotoGroupMeta } from "@/types"
 
 export type PhotoData = {
   data: Buffer | string
@@ -35,10 +35,16 @@ export function createPhotoManager(photoGroup: PhotoGroupConfig) {
   const paths = photoGroup.files
   const cache = new Map<string, CacheEntry<PhotoData>>()
   const randomOrder = shuffle(range(0, paths.length))
+  const photoGroupMeta: PhotoGroupMeta = {
+    name: photoGroup.group,
+    photosCount: paths.length,
+  }
 
   let currentIndex = 0
 
-  async function ensurePhotoLoaded(index: number): Promise<PhotoData> {
+  async function ensurePhotoLoaded(
+    index: number
+  ): Promise<PhotoData | undefined> {
     const path: string = paths[randomOrder[index]]
     if (cache.has(path)) {
       winston.debug(`Photo found in cache (${path})`)
@@ -47,7 +53,12 @@ export function createPhotoManager(photoGroup: PhotoGroupConfig) {
       return Promise.resolve(entry.data)
     }
     winston.debug(`Photo not found in cache, loading (${path})`)
-    const loaded = await loadPhoto(path)
+    let loaded: PhotoData | undefined = undefined
+    try {
+      loaded = await loadPhoto(path)
+    } catch (error) {
+      return undefined
+    }
     cache.set(path, {
       data: loaded,
       lastAccess: Date.now(),
@@ -63,7 +74,11 @@ export function createPhotoManager(photoGroup: PhotoGroupConfig) {
   }
 
   async function loadPhoto(path: string): Promise<PhotoData> {
+    if (!fs.existsSync(path)) {
+      throw new Error(`file '${path}' does not exist`)
+    }
     const file = await asyncfs.open(path)
+
     const imageFileName = basename(path)
     const fileStats = await file.stat()
     const bytes = await file.readFile()
@@ -108,16 +123,20 @@ export function createPhotoManager(photoGroup: PhotoGroupConfig) {
     })
   }
 
-  async function getRandomPhoto(): Promise<PhotoData> {
-    const photo = await ensurePhotoLoaded(currentIndex)
-
-    // Pre-load a few next photos
-    range(1, 4).forEach((i) =>
-      /* no await here! */ ensurePhotoLoaded(currentIndex + i)
-    )
-
-    currentIndex = normalizeIndex(currentIndex + 1)
-    return photo
+  async function getRandomPhoto(): Promise<PhotoData | undefined> {
+    try {
+      const photo = await ensurePhotoLoaded(currentIndex)
+      // Pre-load a few next photos
+      range(1, 4).forEach((i) =>
+        /* no await here! */ ensurePhotoLoaded(normalizeIndex(currentIndex + i))
+      )
+      currentIndex = normalizeIndex(currentIndex + 1)
+      return photo
+    } catch (error) {
+      winston.warn(`Error when trying to load photo: ${error}`)
+      currentIndex = normalizeIndex(currentIndex + 1)
+      return undefined
+    }
   }
 
   function normalizeIndex(idx: number): number {
@@ -126,5 +145,6 @@ export function createPhotoManager(photoGroup: PhotoGroupConfig) {
 
   return {
     getRandomPhoto,
+    photoGroupMeta,
   }
 }

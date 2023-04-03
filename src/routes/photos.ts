@@ -10,4 +10,5 @@ export const photos = (router: Router): void => {
     "/photos/random/json/:groupIdx",
     PhotosController.getRandomPhotoJson
   )
+  router.get("/photos/groups", PhotosController.getPhotoGroups)
 }

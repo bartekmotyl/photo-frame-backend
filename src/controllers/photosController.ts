@@ -8,6 +8,7 @@ export const PhotosController = {
   getRandomPhotoJpeg: async (req: Request, res: Response) => {
     try {
       const groupIdx = parseInt(req.params.groupIdx ?? "0")
+      if (!photoManagers[groupIdx]) throw new Error("invalid group id")
       const photoData = await photoManagers[groupIdx].getRandomPhoto()
       if (!photoData) throw new Error("cannot load photo")
       return res
@@ -25,6 +26,7 @@ export const PhotosController = {
   getRandomPhotoJson: async (req: Request, res: Response) => {
     try {
       const groupIdx = parseInt(req.params.groupIdx ?? "0")
+      if (!photoManagers[groupIdx]) throw new Error("invalid group id")
       const photoData = await photoManagers[groupIdx].getRandomPhoto()
       if (!photoData) throw new Error("cannot load photo")
       photoData.data = photoData.data.toString("base64")
